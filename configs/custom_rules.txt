@@ -1,0 +1,4 @@
+Domain: www.google.com
+Type: Exact Deny
+Group Assignment: Default
+Comment: Added manually from live query log inspection to block outbound telemetry
