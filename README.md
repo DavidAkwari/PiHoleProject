@@ -2,8 +2,8 @@
 
 This repository contains the documentation, configuration details, and automation scripts for a network wide DNS sinkhole deployed on a Raspberry Pi. This project intercepts and blocks telemetry tracking, advertisements, and malicious domains across all connected devices on a local network.
 
-## Technical Environment
-* **Hardware:** Raspberry Pi Server
+## Technical Environment Model B
+* **Hardware:** Raspberry Pi 3
 * **Hostname:** akwabot
 * **Network Interface:** Wired Ethernet eth0
 * **Static IPv4 Assignment:** 10.0.0.16
