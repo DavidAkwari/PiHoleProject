@@ -1,25 +1,42 @@
-# Pi hole Network DNS Sinkhole
+# Pi-hole Network DNS Sinkhole
 
-This repository contains the documentation, configuration details, and automation scripts for a network wide DNS sinkhole deployed on a Raspberry Pi. This project intercepts and blocks telemetry tracking, advertisements, and malicious domains across all connected devices on a local network.
+A network-wide DNS sinkhole running on a Raspberry Pi. It intercepts and blocks ads, telemetry, tracking, and malicious domains for every device on my home network.
 
-## Technical Environment Model B
-* **Hardware:** Raspberry Pi 3
-* **Hostname:** akwabot
-* **Network Interface:** Wired Ethernet eth0
-* **Static IPv4 Assignment:** 10.0.0.16
-* **Upstream DNS Resolver:** Google ECS DNSSEC
+## Why I built this
 
-## Deployment and Configuration
-The deployment utilized the official automated installation script. During the initial system update, a directory lock conflict occurred at /var/lib/apt/lists/lock. The terminal indicated the lock was held by a background process named packagekitd. I manually terminated this process to release the directory lock and successfully execute the update commands.
+Ads and promotions were getting annoying on my home network — a Roku TV, a few other devices, YouTube. I wanted one point of control instead of ad-blockers on every device.
 
-The server was bound strictly to the eth0 interface to ensure maximum stability and assigned a permanent static IP address of 10.0.0.16.
+## The interesting part
 
-## Network Routing and DHCP Management
-Because the ISP provided Xfinity gateway restricts custom DNS modifications, I engineered a DHCP handover. I configured the Pi hole to act as the primary DHCP server, distributing a designated IP pool from 10.0.0.50 to 10.0.0.250.
+My ISP-provided Xfinity gateway doesn't allow custom DNS settings. So instead of giving up, I made the Pi-hole the network's primary DHCP server, handing out IPs in the 10.0.0.50–10.0.250 range. Then I disabled both stateless and stateful DHCPv6 on the gateway, because modern devices will happily bypass your DNS filter over IPv6 if you let them. Now all local traffic is forced through the managed IPv4 DNS sinkhole.
 
-To prevent modern devices from bypassing the DNS filtering protocols via IPv6, both Stateless and Stateful DHCPv6 options were completely disabled within the Xfinity gateway. This forced all local network traffic to route strictly through the managed IPv4 DNS sinkhole.
+## Setup
 
-## Traffic Monitoring and Advanced Filtering
-The baseline installation utilized a standard blocklist comprising 75,994 known tracking domains. To enhance network defenses, I integrated community curated blocklists including OISD and HaGezi via the Group Management Adlists interface.
+- **Hardware:** Raspberry Pi 3 (Model B), hostname `akwabot`
+- **Network:** WiFi (wireless) with a static IP assignment
+- **Upstream DNS:** Google ECS with DNSSEC
+- **Install:** Official Pi-hole automated installer
 
-Granular query inspection allowed for the enforcement of custom access policies. Live logs for specific clients displayed continuous outbound telemetry requests to multiple destinations. I manually isolated domains like www.google.com from the live feed and appended them to the domain management directory as exact deny rules.
+One hiccup during setup: the initial system update failed because `packagekitd` was holding the lock at `/var/lib/apt/lists/lock`. Killed the process, re-ran the update, moved on.
+
+## Filtering
+
+- Base blocklist: **75,994** known tracking domains
+- Added community lists: OISD and HaGeZi via Group Management → Adlists
+- Granular per-device policies and custom exact-deny rules, built by watching live query logs and isolating outbound telemetry to specific destinations
+
+## Results
+
+- Covers **6 devices**
+- First sample: **10 of 858** queries blocked (1.2%)
+- Roku promotions: gone
+- YouTube ads: **not blocked** — Pi-hole works at the DNS level, and YouTube serves ads from the same domains as its content. Honest limitation, worth knowing before you deploy one.
+
+## What's in this repo
+
+- `configs/` — Pi-hole configuration exports
+- `scripts/` — automation scripts
+
+## What I'd do differently
+
+Add a second Pi as failover so DNS doesn't die when I reboot the thing. Also considering DNS-over-HTTPS for upstream queries so my ISP can't see them either.
